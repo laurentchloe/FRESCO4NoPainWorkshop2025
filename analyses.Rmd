@@ -1,0 +1,223 @@
+---
+title: "Hands-on Workshop: Exploring TMS Data"
+authors: "SporeData OU"
+output: pdf_document
+---
+
+# Welcome
+
+This short tutorial will guide you through exploring Transcranial Magnetic Stimulation (TMS) study data using R. You don't need any prior coding or statistics experience, we'll go step by step.
+
+# Setup
+
+Before we start, we need a few tools (called packages). These are small add-ons that make R more powerful.
+
+**Step 1 — Install the required packages**
+
+Run this code once on your computer to install what we'll use today.
+
+```{r install_pkg, message = FALSE, warning = FALSE, eval=FALSE}
+# Install the required packages if not already installed
+install.packages("dplyr")
+install.packages("ggplot2")
+install.packages("tableone")
+install.packages("lme4")
+```
+
+**Step 2 — Load the packages**
+
+You'll need to load these every time you open a new R session.
+
+```{r load_pkg, message = FALSE, warning = FALSE}
+# Load the required packages
+library(dplyr)
+library(ggplot2)
+library(tableone)
+library(lme4)
+```
+
+
+# Load and peek at the data
+
+Let's start by reading our dataset into R.
+
+**What does this mean?**
+
+* `read.csv()` tells R to open a spreadsheet file that's in CSV format.
+* The result is stored in something called a data frame, a bit like an Excel sheet.
+
+```{r load_data, message = FALSE, warning = FALSE}
+# Path to your CSV file
+path <- "data.csv"
+
+# Read the CSV
+data <- read.csv(path)
+```
+
+Take a quick look at the first few rows using `head()`, so you can confirm the data looks right.
+
+```{r peek_data1, message = FALSE, warning = FALSE}
+# Peek at the first few rows
+head(data)
+```
+
+Then, see the structure (column names and data types) using `str()`. This is useful to check that, for example, numbers are numeric and not text. This command shows:
+
+* Each column name
+* The type of data (numbers, text, etc.)
+* A few example values from each column
+
+Think of this like "What kind of information do I have in each column?"
+
+```{r peek_data2, message = FALSE, warning = FALSE}
+str(data)
+```
+
+Finally, `summary()` provides summary statistics for each column. This gives quick numerical summaries:
+
+* For numbers: minimum, mean, median, maximum
+* For text or categories: how many of each type
+
+At this point, you should have a good sense of what's inside your dataset.
+
+```{r peek_data3, message = FALSE, warning = FALSE}
+# Quick summary of each column
+summary(data)
+```
+
+
+# Exploratory analysis
+
+Now the fun part, visualizing what's happening in the data.
+
+Before plotting, let's make sure the `time` variable appears in the correct order (pre > post > follow-up):
+
+```{r order_time, message = FALSE, warning = FALSE}
+data <- data %>%
+  mutate(time = factor(time, levels = c("pre", "post", "followup")))
+```
+
+## Plot 1 - Symptom change over time by treatment
+
+In TMS research, we often want to know: Do patients receiving active TMS improve more than those in the sham (placebo) group?
+
+This plot shows average symptom scores at each stage of the study:
+
+* **Pre**: before any treatment
+* **Post**: immediately after treatment
+* **Follow-up**: some time later
+
+We'll add:
+
+* **Dots** for mean symptom scores
+* **Lines** connecting them over time
+* **Error bars** showing uncertainty (standard error)
+
+```{r plot1, message = FALSE, warning = FALSE}
+ggplot(data, aes(x = time, y = symptom_score, color = treatment, group = treatment)) +
+  stat_summary(fun = mean, geom = "line", linewidth = 1) +
+  stat_summary(fun = mean, geom = "point", size = 3) +
+  stat_summary(fun.data = mean_se, geom = "errorbar", width = 0.1) +
+  labs(
+    title = "Symptom Change Over Time by Treatment",
+    x = "Session Time",
+    y = "Mean Symptom Score",
+    color = "Treatment"
+  ) +
+  theme_minimal(base_size = 14)
+```
+
+**How to read this**
+
+* The y-axis shows average symptom severity.
+* The x-axis shows time: pre → post → follow-up.
+* Two lines: one for each treatment type (active vs sham).
+* If the active line goes down more steeply, patients improved more with active TMS.
+* If both lines look similar, the sham effect may be similar (placebo or no effect).
+
+**Clinically speaking**
+
+This is your first visual check: is there an apparent treatment benefit?
+Don't jump to conclusions yet, but you'll see whether the trend looks promising.
+
+## Plot 2 - Change from baseline
+
+Absolute scores are useful, but clinicians often care more about change from baseline: How much did the patient improve compared to where they started?
+
+In the data, this is already computed in the column `delta_from_baseline` (baseline - follow-up). A high value means improvement (symptoms decreased).
+
+We'll plot these changes for each group and time point.
+
+```{r plot2, message = FALSE, warning = FALSE}
+ggplot(data, aes(x = time, y = delta_from_baseline, fill = treatment)) +
+  stat_summary(fun = mean, geom = "bar", position = position_dodge(0.8), width = 0.7) +
+  stat_summary(fun.data = mean_se, geom = "errorbar",
+               position = position_dodge(0.8), width = 0.2) +
+  labs(
+    title = "Change from Baseline by Time and Treatment",
+    x = "Session Time",
+    y = "Symptom Score (from baseline)",
+    fill = "Treatment"
+  ) +
+  theme_minimal(base_size = 14)
+```
+
+**How to read this**
+
+* Each bar shows the average change from baseline.
+* High values indicate improvement.
+* Compare active vs sham at post and follow-up.
+* Look at the height difference: larger drops mean more improvement.
+
+**Clinically speaking**
+
+This plot gives a quick sense of treatment effect size, how much better the active group got relative to the sham group.
+
+## Your turn
+
+Now that you`ve made two fundamental plots, try adding or changing things to dig deeper. Below are a few extra plots to explore, each demonstrating a different concept.
+
+* Check whether brain response (MEP amplitude) is related to symptom improvement.
+* Compare EEG signals between groups.
+
+
+## Table one
+
+A common clinical research step is to create a Table One summarizing baseline characteristics of your groups. This helps ensure groups are comparable before treatment. Let's create one using the `tableone` package.
+
+```{r table_one, message = FALSE, warning = FALSE}
+# Define variables for Table One
+vars <- c("age", "gender", "symptom_score", "delta_from_baseline")
+catVars <- c("gender", "comorbidities") # Categorical variables
+strataVar <- "treatment" # Grouping variable
+
+# Create Table One
+tableOne <- CreateTableOne(vars = vars, data = data, factorVars = catVars, strata = strataVar)
+print(tableOne)
+```
+
+Now, it is your turn! Modify the variables in `vars` and `catVars` to include other baseline characteristics relevant to your study. Run the code to see how the groups compare before treatment.
+
+
+# Regression model
+
+## Simple linear regression
+
+First, we'll fit a simple linear regression model to see how treatment affects symptom scores at follow-up, controlling for baseline scores.
+
+```{r regression_model, message = FALSE, warning = FALSE}
+data_followup <- data %>% filter(time == "followup")
+model <- lm(symptom_score ~ treatment + symptom_baseline, data = data_followup)
+summary(model)
+```
+
+Now, also add more predictors like age, gender and more to see if they influence outcomes.
+
+# Mixed effects model
+
+In this section, we'll fit a mixed effects model to account for repeated measures over time within subjects, which is common in clinical trials where we have multiple observations per patient (at pre, post, and follow-up).
+
+```{r mixed_effects_model, message = FALSE, warning = FALSE}
+model_mixed <- lmer(symptom_score ~ treatment * time + (1 | subject_id), data = data)
+summary(model_mixed)
+```

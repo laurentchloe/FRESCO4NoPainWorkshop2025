@@ -173,9 +173,9 @@ ggplot(data, aes(x = time, y = delta_from_baseline, fill = treatment)) +
 
 This plot gives a quick sense of treatment effect size, how much better the active group got relative to the sham group.
 
-## Your turn
+**Your turn**
 
-Now that you`ve made two fundamental plots, try adding or changing things to dig deeper. Below are a few extra plots to explore, each demonstrating a different concept.
+Now that you’ve made two fundamental plots, try adding or changing things to dig deeper. Below are a few extra plots to explore, each demonstrating a different concept.
 
 * Check whether brain response (MEP amplitude) is related to symptom improvement.
 * Compare EEG signals between groups.
@@ -187,12 +187,19 @@ A common clinical research step is to create a Table One summarizing baseline ch
 
 ```{r table_one, message = FALSE, warning = FALSE}
 # Define variables for Table One
-vars <- c("age", "gender", "symptom_score", "delta_from_baseline")
-catVars <- c("gender", "comorbidities") # Categorical variables
+vars <- c(
+  "age", "gender", "medication", "site", "coil_intensity",
+  "MEP_amplitude",  "EEG_theta",  "EEG_alpha",  "EEG_beta","symptom_score"
+  )
+catVars <- c("gender", "site") # Categorical variables
 strataVar <- "treatment" # Grouping variable
 
-# Create Table One
-tableOne <- CreateTableOne(vars = vars, data = data, factorVars = catVars, strata = strataVar)
+# Adjust variable type to properly represent it in the table
+data$medication <- as.logical(data$medication)
+
+# Create Table One with baseline data
+data_baseline <- data %>% filter(time == "pre")
+tableOne <- CreateTableOne(vars = vars, data = data_baseline, factorVars = catVars, strata = strataVar)
 print(tableOne)
 ```
 
@@ -211,6 +218,22 @@ model <- lm(symptom_score ~ treatment + symptom_baseline, data = data_followup)
 summary(model)
 ```
 
+This first model helps us understand whether treatment type (active vs. sham) has an effect on symptom scores at follow-up, while controlling for baseline severity.
+
+**Key takeaways**
+
+The treatmentsham estimate (~6.52, p < 0.001) suggests that participants in the sham group had, on average, higher symptom scores at follow-up compared to those in the active TMS group.
+
+The baseline severity coefficient (~0.89, p < 0.001) shows a strong positive association: participants starting with more severe symptoms tended to remain more severe at follow-up.
+
+The model explains a substantial portion of the variability in follow-up symptoms (R² = 0.82), suggesting that treatment type and baseline severity together are strong predictors of outcome.
+
+**Clinically speaking**
+
+This model indicates a clear benefit of active TMS compared to sham stimulation when adjusting for initial severity. While individual responses may vary, the overall trend strongly supports a meaningful treatment effect.
+
+**Your turn**
+
 Now, also add more predictors like age, gender and more to see if they influence outcomes.
 
 # Mixed effects model
@@ -221,3 +244,29 @@ In this section, we'll fit a mixed effects model to account for repeated measure
 model_mixed <- lmer(symptom_score ~ treatment * time + (1 | subject_id), data = data)
 summary(model_mixed)
 ```
+
+This second model accounts for repeated measures—each participant was assessed multiple times (pre, post, follow-up)—and thus includes a random intercept for each subject to capture individual differences.
+
+**What the model includes**
+
+*Fixed effects:* treatment, time, and their interaction (treatment × time).
+
+*Random effects:* subject-level intercepts, allowing each participant to have their own baseline level of symptoms.
+
+**Key results**
+
+*Time effects:* Both timepost (-7.53) and timefollowup (-7.60) show large, negative coefficients (t = -15 and -14), meaning that symptom severity decreased significantly over time compared to the pre-treatment phase.
+
+*Treatment main effect:* The treatmentsham term alone (-0.19) was small and not significant, indicating no overall difference between groups at baseline.
+
+*Interaction effects:* Both treatmentsham:timepost (5.26) and treatmentsham:timefollowup (6.69) were large and significant, showing that sham participants improved less over time than those receiving active TMS.
+
+**Random effects interpretation**
+
+The subject-level variance (82.7) shows there are meaningful individual differences in baseline symptom levels.
+
+The residual variance (9.8) reflects remaining within-person variability not explained by the model.
+
+**Clinically speaking**
+
+This mixed-effects approach confirms the pattern seen earlier: active TMS produced greater improvement over time. The strong time effects indicate that participants generally improved with treatment, but the interaction shows that the active group's improvement was significantly larger and more sustained at follow-up. This supports the idea that active stimulation drives the observed changes.

@@ -8,9 +8,21 @@ output: pdf_document
 
 This short tutorial will guide you through exploring Transcranial Magnetic Stimulation (TMS) study data using R. You don't need any prior coding or statistics experience, we'll go step by step.
 
+# Requirements
+
+Before getting started, make sure you have R installed on your computer.
+You can download it for free from the official CRAN website: https://cran.r-project.org/
+
+To make things easier, we also recommend using an IDE (Integrated Development Environment), which provides an interface that helps you write and run R code more smoothly.
+
+If you're new to R, the best option is RStudio, since it's built specifically for R and is very beginner-friendly.
+You can download RStudio here: https://posit.co/download/rstudio-desktop/
+
+Both R and RStudio are free to download and use.
+
 # Setup
 
-Before we start, we need a few tools (called packages). These are small add-ons that make R more powerful.
+Once you have R installed, you will also need a few extra tools (called packages). These are small add-ons that make R more powerful.
 
 **Step 1 — Install the required packages**
 
@@ -22,6 +34,8 @@ install.packages("dplyr")
 install.packages("ggplot2")
 install.packages("tableone")
 install.packages("lme4")
+install.packages("Rmarkdown")
+install.packages("lmerTest")
 ```
 
 **Step 2 — Load the packages**
@@ -34,6 +48,7 @@ library(dplyr)
 library(ggplot2)
 library(tableone)
 library(lme4)
+library(lmerTest)
 ```
 
 
@@ -224,7 +239,7 @@ This first model helps us understand whether treatment type (active vs. sham) ha
 
 The treatmentsham estimate (~6.52, p < 0.001) suggests that participants in the sham group had, on average, higher symptom scores at follow-up compared to those in the active TMS group.
 
-The baseline severity coefficient (~0.89, p < 0.001) shows a strong positive association: participants starting with more severe symptoms tended to remain more severe at follow-up.
+The baseline severity coefficient (~0.89, p < 0.001) shows a positive association: participants starting with more severe symptoms tended to also present higher symptom scores at follow-up.
 
 The model explains a substantial portion of the variability in follow-up symptoms (R² = 0.82), suggesting that treatment type and baseline severity together are strong predictors of outcome.
 
@@ -269,4 +284,29 @@ The residual variance (9.8) reflects remaining within-person variability not exp
 
 **Clinically speaking**
 
-This mixed-effects approach confirms the pattern seen earlier: active TMS produced greater improvement over time. The strong time effects indicate that participants generally improved with treatment, but the interaction shows that the active group's improvement was significantly larger and more sustained at follow-up. This supports the idea that active stimulation drives the observed changes.
+This mixed-effects approach confirms the pattern seen earlier: active TMS produced greater improvement over time. The strong time effects indicate that participants generally improved with treatment, but the interaction shows that the active group's improvement was larger and more sustained at follow-up. This supports the idea that active stimulation drives the observed changes.
+
+# Additional resources:
+
+If you'd like to keep exploring R on your own, here are some great resources to help you learn, practice, and grow your skills:
+
+**1. Hands-On Programming with R:** A beginner-friendly introduction to R programming.  
+Link: https://rstudio-education.github.io/hopr/
+
+**2. RStudio Cheat Sheets:** Handy reference guides for data visualization, wrangling, and more.  
+Link: https://posit.co/resources/cheatsheets/
+
+**3. R for Data Science (by Hadley Wickham & Garrett Grolemund):** A free, in-depth book that covers tidy data workflows.  
+Link: https://r4ds.hadley.nz/
+
+**4. Documentation for the tableone package:** A practical guide to using the tableone package for creating descriptive summary tables commonly used in medical and epidemiological research.  
+Link: https://cran.r-project.org/web/packages/tableone/vignettes/introduction.html
+
+**5. YaRrr! The Pirate’s Guide to R:** Another introduction to R programming. It also includes a great beginner-friendly overview of linear models using the lm() function.   
+Link: https://bookdown.org/ndphillips/YaRrr/
+
+**6. An R companion to Statistics: data analysis and modelling:** A companion guide for learning statistical modeling in R, including detailed chapters on linear mixed-effects models using lmer().  
+Link: https://mspeekenbrink.github.io/sdam-r-companion/index.html
+
+**7. Fitting Linear Mixed-Effects Models Using lme4:** The official documentation for the lme4 package, explaining the theory, syntax, and practical examples for fitting mixed-effects models with lmer().  
+Link: https://cran.r-project.org/web/packages/lme4/vignettes/lmer.pdf

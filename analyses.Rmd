@@ -159,11 +159,14 @@ Don't jump to conclusions yet, but you'll see whether the trend looks promising.
 
 Absolute scores are useful, but clinicians often care more about change from baseline: How much did the patient improve compared to where they started?
 
-In the data, this is already computed in the column `delta_from_baseline` (baseline - follow-up). A high value means improvement (symptoms decreased).
-
 We'll plot these changes for each group and time point.
 
 ```{r plot2, message = FALSE, warning = FALSE}
+# First, let's calculate the delta
+data <- data %>%
+  mutate(delta_from_baseline = symptom_score - symptom_baseline)
+
+# Then plot it
 ggplot(data, aes(x = time, y = delta_from_baseline, fill = treatment)) +
   stat_summary(fun = mean, geom = "bar", position = position_dodge(0.8), width = 0.7) +
   stat_summary(fun.data = mean_se, geom = "errorbar",
@@ -180,9 +183,10 @@ ggplot(data, aes(x = time, y = delta_from_baseline, fill = treatment)) +
 **How to read this**
 
 * Each bar shows the average change from baseline.
-* High values indicate improvement.
 * Compare active vs sham at post and follow-up.
+* Because the score measures symptom severity, a drop (more negative value) means symptoms improved.
 * Look at the height difference: larger drops mean more improvement.
+* In other words: the lower the bar, the greater the improvement. 
 
 **Clinically speaking**
 
